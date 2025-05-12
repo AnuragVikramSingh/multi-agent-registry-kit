@@ -126,12 +126,12 @@ graph TD
     
     subgraph "Registry Pattern"
         B[Agent Registry] -->|Store| AgentDB[(Agent Database)]
-        A[Agent Implementation] -->|@register_agent| B
+        A[Agent Implementation] -->|"register_agent"| B
         B -->|Lookup| Router
     end
     
     subgraph "Discovery Process"
-        C[Agent Discovery] -->|discover_agents()| D[Import Agent Modules]
+        C[Agent Discovery] -->|discover_agents| D[Import Agent Modules]
         D -->|Registration| B
     end
     
