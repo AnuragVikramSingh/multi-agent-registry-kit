@@ -175,7 +175,7 @@ flowchart TD
     
     %% User query flow
     WaitQuery --> UserQuery[User Submits Query]
-    UserQuery --> IsNewConv{New Conversation\nor Reset?}
+    UserQuery --> IsNewConv{New Conversation or Reset?}
     
     %% Routing decision
     IsNewConv -->|Yes| RouteQuery[Route Query]
