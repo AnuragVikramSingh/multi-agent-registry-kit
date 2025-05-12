@@ -6,28 +6,31 @@ calculations, equations, and numerical analysis. It inherits from the BaseAgent
 class and overrides the get_description method to provide a description of its
 capabilities.
 """
+
 from .base_agent import BaseAgent
 from ..core.registry import register_agent
+
 
 @register_agent
 class MathAgent(BaseAgent):
     """
     Agent for handling math queries with multi-turn support.
-    
+
     This agent specializes in mathematical problems and calculations. It can:
     - Solve equations and systems of equations
     - Perform arithmetic operations
     - Handle calculus problems (derivatives, integrals)
     - Work with statistics and probability
     - Analyze numerical data
-    
+
     The agent maintains context across multiple turns, allowing it to build on
     previous interactions when solving complex problems.
     """
+
     def __init__(self, model):
         """
         Initialize the math agent with a specialized system prompt.
-        
+
         Args:
             model: The LLM model to use for generating responses
         """
@@ -47,12 +50,12 @@ Maintain context across the conversation. If the user has already provided some 
 Only respond to math questions. If the query is not about math, politely decline and explain that you're a math specialist.
 """
         super().__init__(model, system_prompt)
-        
+
     @classmethod
     def get_description(cls):
         """
         Return a description of what this agent handles.
-        
+
         Returns:
             str: Description of the agent's mathematical capabilities
         """

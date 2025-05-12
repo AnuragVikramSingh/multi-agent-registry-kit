@@ -17,7 +17,6 @@ DEFAULT_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
 MODEL_CONFIG = {
     # Temperature controls randomness in the output (0.0 = deterministic, 1.0 = creative)
     "temperature": 0.0,
-    
     # Maximum number of tokens to generate in the response
     "max_tokens": 1024,
 }

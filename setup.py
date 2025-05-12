@@ -5,6 +5,7 @@ This script configures the package for distribution and installation.
 It reads metadata from README.md and requirements.txt to populate
 package information and dependencies.
 """
+
 from setuptools import setup, find_packages
 import os
 
@@ -14,7 +15,9 @@ with open("README.md", encoding="utf-8") as f:
 
 # Read requirements from requirements.txt
 with open("requirements.txt", encoding="utf-8") as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    requirements = [
+        line.strip() for line in f if line.strip() and not line.startswith("#")
+    ]
 
 setup(
     name="multi-agent-registry-kit",
@@ -48,6 +51,6 @@ setup(
         "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Software Development :: Libraries :: Python Modules",
-        "Operating System :: OS Independent"
+        "Operating System :: OS Independent",
     ],
 )
