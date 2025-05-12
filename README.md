@@ -122,41 +122,44 @@ pip install -r requirements.txt
 
 ```mermaid
 graph TD
-    User((User)) -->|Query| Router
+    User((User)) -->|Query| Main[Main Application]
+    Main -->|New Query| Router
     
-    subgraph "Registry Pattern"
-        B[Agent Registry] -->|Store| AgentDB[(Agent Database)]
-        A[Agent Implementation] -->|"register_agent"| B
-        B -->|Lookup| Router
+    subgraph Registry[Registry Pattern]
+        AgentRegistry[Agent Registry] -->|Store| AgentDict[(Agent Dictionary)]
+        BaseAgent[Base Agent] -.->|Inheritance| SpecializedAgentClasses
+        SpecializedAgentClasses -->|"@register_agent"| AgentRegistry
+        AgentRegistry -->|"get_all_agents()"| Router
     end
     
-    subgraph "Discovery Process"
-        C[Agent Discovery] -->|discover_agents| D[Import Agent Modules]
-        D -->|Registration| B
+    subgraph Discovery[Discovery Process]
+        AgentDiscovery[Agent Discovery] -->|"discover_agents()"| ImportModules[Import Agent Modules]
+        ImportModules -->|Trigger Registration| AgentRegistry
     end
     
-    subgraph "Routing Process"
-        Router{Router} -->|Route Query| SpecializedAgents
-        SpecializedAgents -->|Math Query| MathAgent[Math Agent]
-        SpecializedAgents -->|Code Query| CodeAgent[Code Agent]
-        SpecializedAgents -->|General Query| GenAgent[General Agent]
+    subgraph Routing[Routing Process]
+        Router{Router Agent} -->|"route_query()"| AnalyzeIntent[Analyze Query Intent]
+        AnalyzeIntent -->|Select Agent| AgentInstances
+        Router -->|Initialize| AgentInstances
+        AgentInstances -->|MathAgent| MathInstance[Math Agent Instance]
+        AgentInstances -->|CodingAgent| CodeInstance[Coding Agent Instance]
+        AgentInstances -->|GeneralAgent| GenInstance[General Agent Instance]
     end
     
-    MathAgent -->|Response| User
-    CodeAgent -->|Response| User
-    GenAgent -->|Response| User
+    MathInstance -->|"process_query()"| LLMModel[LLM Model]
+    CodeInstance -->|"process_query()"| LLMModel
+    GenInstance -->|"process_query()"| LLMModel
     
-    classDef registry fill:#ffe0d0,stroke:#ff8030,stroke-width:2px
-    classDef agent fill:#d0e0ff,stroke:#3080ff,stroke-width:2px
-    classDef process fill:#d0ffe0,stroke:#30ff80,stroke-width:2px
-    classDef orchestrator fill:#ffd0e0,stroke:#ff3080,stroke-width:2px
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    LLMModel -->|Response| ConvState[Conversation State]
+    ConvState -->|Update History| Main
+    Main -->|Response| User
     
-    class B,AgentDB registry
-    class A,MathAgent,CodeAgent,GenAgent agent
-    class C,D process
-    class Router,SpecializedAgents orchestrator
+    class AgentRegistry,AgentDict registry
+    class BaseAgent,SpecializedAgentClasses,MathInstance,CodeInstance,GenInstance agent
+    class AgentDiscovery,ImportModules,AnalyzeIntent process
+    class Router,AgentInstances orchestrator
     class User user
+    class LLMModel,ConvState model
 ```
 
 ### Agent Router Workflow
@@ -164,40 +167,67 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant User
-    participant ConvState as Conversation State
-    participant Router as Router
+    participant Main as Main Application
+    participant Router as Router Agent
     participant Registry as Agent Registry
+    participant Discovery as Agent Discovery
+    participant ConvState as Conversation State
     participant MathAgent
     participant CodingAgent
     participant GeneralAgent
+    participant LLM as LLM Model
     
-    User->>+Router: Submit Query
-    Router->>ConvState: Update History
-    Router->>Registry: get_all()
-    Registry-->>Router: Return Registered Agents
+    Note over Main: Application Start
+    Main->>Router: Initialize Router Agent
+    Router->>Discovery: discover_agents()
+    Discovery-->>Router: Discovered Modules
+    Router->>Registry: get_all_agents()
+    Registry-->>Router: All Registered Agents
+    Router->>Router: Initialize Agent Instances
+    Router->>Router: Generate Routing Prompt
     
-    Note over Router: Generate Dynamic Routing Prompt
+    User->>Main: Submit Query
     
-    Router->>Router: Analyze Query Intent
-    
-    alt Math Query
-        Router->>+MathAgent: Route to Math Agent
-        MathAgent->>ConvState: Get Relevant History
-        MathAgent-->>-Router: Math Response
-    else Coding Query
-        Router->>+CodingAgent: Route to Coding Agent
-        CodingAgent->>ConvState: Get Relevant History
-        CodingAgent-->>-Router: Code Response
-    else General Query
-        Router->>+GeneralAgent: Route to General Agent
-        GeneralAgent->>ConvState: Get Relevant History
-        GeneralAgent-->>-Router: General Response
+    alt New Conversation or Reset
+        Main->>Router: route_query(query)
+        Router->>LLM: Analyze Query Intent
+        LLM-->>Router: Selected Agent Name
+        Router->>Router: get_agent(agent_name)
+        Router-->>Main: Return Agent Instance
     end
     
-    Router->>ConvState: Update with Response
-    Router-->>-User: Deliver Response
+    alt Math Query
+        Main->>MathAgent: process_query(query)
+        MathAgent->>ConvState: Create Messages with History
+        MathAgent->>LLM: Invoke with Messages
+        LLM-->>MathAgent: Generate Response
+        MathAgent->>ConvState: Update History
+        MathAgent-->>Main: Return Response
+    else Coding Query
+        Main->>CodingAgent: process_query(query)
+        CodingAgent->>ConvState: Create Messages with History
+        CodingAgent->>LLM: Invoke with Messages
+        LLM-->>CodingAgent: Generate Response
+        CodingAgent->>ConvState: Update History
+        CodingAgent-->>Main: Return Response
+    else General Query
+        Main->>GeneralAgent: process_query(query)
+        GeneralAgent->>ConvState: Create Messages with History
+        GeneralAgent->>LLM: Invoke with Messages
+        LLM-->>GeneralAgent: Generate Response
+        GeneralAgent->>ConvState: Update History
+        GeneralAgent-->>Main: Return Response
+    end
     
-    Note over User,Router: Multi-turn conversation continues
+    Main-->>User: Display Response
+    
+    Note over User,Main: Subsequent queries use same agent
+    
+    alt User Types "reset"
+        User->>Main: "reset"
+        Main->>ConvState: Reset Conversation
+        Main->>Main: Clear Current Agent
+    end
 ```
 
 ## Project Structure
