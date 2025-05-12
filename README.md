@@ -165,69 +165,66 @@ graph TD
 ### Agent Router Workflow
 
 ```mermaid
-sequenceDiagram
-    participant User
-    participant Main as Main Application
-    participant Router as Router Agent
-    participant Registry as Agent Registry
-    participant Discovery as Agent Discovery
-    participant ConvState as Conversation State
-    participant MathAgent
-    participant CodingAgent
-    participant GeneralAgent
-    participant LLM as LLM Model
+flowchart TD
+    %% Main flow
+    Start([Start Application]) --> InitRouter[Initialize Router Agent]
+    InitRouter --> DiscoverAgents[Discover Agents]
+    DiscoverAgents --> RegisterAgents[Register Agents]
+    RegisterAgents --> InitAgentInstances[Initialize Agent Instances]
+    InitAgentInstances --> WaitQuery[Wait for User Query]
     
-    Note over Main: Application Start
-    Main->>Router: Initialize Router Agent
-    Router->>Discovery: discover_agents()
-    Discovery-->>Router: Discovered Modules
-    Router->>Registry: get_all_agents()
-    Registry-->>Router: All Registered Agents
-    Router->>Router: Initialize Agent Instances
-    Router->>Router: Generate Routing Prompt
+    %% User query flow
+    WaitQuery --> UserQuery[User Submits Query]
+    UserQuery --> IsNewConv{New Conversation\nor Reset?}
     
-    User->>Main: Submit Query
+    %% Routing decision
+    IsNewConv -->|Yes| RouteQuery[Route Query]
+    RouteQuery --> AnalyzeIntent[Analyze Query Intent]
+    AnalyzeIntent --> SelectAgent[Select Appropriate Agent]
+    SelectAgent --> StoreAgent[Store Current Agent]
     
-    alt New Conversation or Reset
-        Main->>Router: route_query(query)
-        Router->>LLM: Analyze Query Intent
-        LLM-->>Router: Selected Agent Name
-        Router->>Router: get_agent(agent_name)
-        Router-->>Main: Return Agent Instance
-    end
+    IsNewConv -->|No| UseCurrentAgent[Use Current Agent]
+    StoreAgent --> ProcessQuery[Process Query]
+    UseCurrentAgent --> ProcessQuery
     
-    alt Math Query
-        Main->>MathAgent: process_query(query)
-        MathAgent->>ConvState: Create Messages with History
-        MathAgent->>LLM: Invoke with Messages
-        LLM-->>MathAgent: Generate Response
-        MathAgent->>ConvState: Update History
-        MathAgent-->>Main: Return Response
-    else Coding Query
-        Main->>CodingAgent: process_query(query)
-        CodingAgent->>ConvState: Create Messages with History
-        CodingAgent->>LLM: Invoke with Messages
-        LLM-->>CodingAgent: Generate Response
-        CodingAgent->>ConvState: Update History
-        CodingAgent-->>Main: Return Response
-    else General Query
-        Main->>GeneralAgent: process_query(query)
-        GeneralAgent->>ConvState: Create Messages with History
-        GeneralAgent->>LLM: Invoke with Messages
-        LLM-->>GeneralAgent: Generate Response
-        GeneralAgent->>ConvState: Update History
-        GeneralAgent-->>Main: Return Response
-    end
+    %% Query processing by agent type
+    ProcessQuery --> AgentType{Agent Type}
+    AgentType -->|Math| MathProcess[Math Agent Processing]
+    AgentType -->|Coding| CodeProcess[Coding Agent Processing]
+    AgentType -->|General| GenProcess[General Agent Processing]
     
-    Main-->>User: Display Response
+    %% Agent processing
+    MathProcess --> InvokeLLM[Invoke LLM]
+    CodeProcess --> InvokeLLM
+    GenProcess --> InvokeLLM
     
-    Note over User,Main: Subsequent queries use same agent
+    %% Response handling
+    InvokeLLM --> GenerateResponse[Generate Response]
+    GenerateResponse --> UpdateHistory[Update Conversation History]
+    UpdateHistory --> DisplayResponse[Display Response to User]
     
-    alt User Types "reset"
-        User->>Main: "reset"
-        Main->>ConvState: Reset Conversation
-        Main->>Main: Clear Current Agent
-    end
+    %% Continue or reset
+    DisplayResponse --> UserAction{User Action}
+    UserAction -->|New Query| UserQuery
+    UserAction -->|"Type 'reset'"| ResetConv[Reset Conversation]
+    UserAction -->|"Type 'exit'"| EndApp([End Application])
+    
+    ResetConv --> ClearAgent[Clear Current Agent]
+    ClearAgent --> WaitQuery
+    
+    %% Styling
+    classDef start fill:#6fd46f,stroke:#009900,stroke-width:2px
+    classDef end fill:#ff6666,stroke:#cc0000,stroke-width:2px
+    classDef process fill:#f9f9f9,stroke:#999999,stroke-width:1px
+    classDef decision fill:#ffcc99,stroke:#ff9933,stroke-width:2px
+    classDef agent fill:#d0e0ff,stroke:#3080ff,stroke-width:2px
+    classDef llm fill:#e0d0ff,stroke:#8030ff,stroke-width:2px
+    
+    class Start,EndApp start
+    class IsNewConv,AgentType,UserAction decision
+    class MathProcess,CodeProcess,GenProcess agent
+    class InvokeLLM,GenerateResponse llm
+    class InitRouter,DiscoverAgents,RegisterAgents,InitAgentInstances,WaitQuery,UserQuery,RouteQuery,AnalyzeIntent,SelectAgent,StoreAgent,UseCurrentAgent,ProcessQuery,UpdateHistory,DisplayResponse,ResetConv,ClearAgent process
 ```
 
 ## Project Structure
