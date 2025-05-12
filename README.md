@@ -212,14 +212,6 @@ flowchart TD
     ResetConv --> ClearAgent[Clear Current Agent]
     ClearAgent --> WaitQuery
     
-    %% Styling
-    classDef start fill:#6fd46f,stroke:#009900,stroke-width:2px
-    classDef end fill:#ff6666,stroke:#cc0000,stroke-width:2px
-    classDef process fill:#f9f9f9,stroke:#999999,stroke-width:1px
-    classDef decision fill:#ffcc99,stroke:#ff9933,stroke-width:2px
-    classDef agent fill:#d0e0ff,stroke:#3080ff,stroke-width:2px
-    classDef llm fill:#e0d0ff,stroke:#8030ff,stroke-width:2px
-    
     class Start,EndApp start
     class IsNewConv,AgentType,UserAction decision
     class MathProcess,CodeProcess,GenProcess agent
