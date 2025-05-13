@@ -20,6 +20,7 @@ def main():
     3. Routes queries to specialized agents based on content
     4. Maintains conversation state across multiple turns
     5. Handles special commands like 'exit' and 'reset'
+    6. Automatically detects intent changes and reroutes to appropriate agents
 
     Returns:
         None
@@ -27,6 +28,7 @@ def main():
     # Initialize the router agent with default configuration
     router = RouterAgent(region_name=DEFAULT_REGION, model_id=DEFAULT_MODEL_ID)
     current_agent = None
+    current_agent_name = None
 
     # Display welcome message and instructions
     print("Welcome to MultiAgentRegistryKit!")
@@ -48,13 +50,23 @@ def main():
             if current_agent:
                 current_agent.reset_conversation()
                 current_agent = None
+                current_agent_name = None
             continue
 
-        # If this is a new conversation or after reset, route to appropriate agent
-        if not current_agent:
-            agent_name = router.route_query(query)
-            current_agent = router.get_agent(agent_name)
-            print(f"Routing to {agent_name}")
+        # Check if intent has changed by asking router to analyze the query
+        new_agent_name = router.route_query(query)
+        
+        # If this is a new conversation or intent has changed, route to appropriate agent
+        if not current_agent or new_agent_name != current_agent_name:
+            # If we're switching agents, reset the previous agent's conversation
+            if current_agent:
+                current_agent.reset_conversation()
+                print(f"Intent change detected. Switching from {current_agent_name} to {new_agent_name}")
+            else:
+                print(f"Routing to {new_agent_name}")
+                
+            current_agent = router.get_agent(new_agent_name)
+            current_agent_name = new_agent_name
 
         # Process the query with the current agent
         response = current_agent.process_query(query)
